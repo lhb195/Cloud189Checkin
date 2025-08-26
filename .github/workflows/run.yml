@@ -56,7 +56,8 @@ jobs:
         with:
           max_attempts: 3  # 最多重试3次
           command: npm install
-          
+          timeout_minutes: 10  # 新增超时配置，避免无限制等待
+           
       - name: 🚀 Run
         uses: nick-fields/retry@master
         with:
