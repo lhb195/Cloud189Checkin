@@ -7,7 +7,7 @@ on:
     types: started
   workflow_dispatch:
   schedule:
-    - cron: 03 4 * * *
+    - cron: '03 4 * * *'   # 已修正为北京时间中午12:03执行（UTC 4:03）
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -24,7 +24,11 @@ jobs:
         with:
           node-version: 18
           cache: npm
-
+          
+      # 新增步骤：切换npm源为国内镜像，解决E429限流问题
+      - name: 🔄 Switch npm registry to China mirror
+        run: npm config set registry https://registry.npmmirror.com
+        
       - name: 👾 Check if Debug is true
         if: vars.debug == '1'
         run: |
@@ -45,10 +49,14 @@ jobs:
           secrets_env: production
           prefix_prod: ""
           file_name_prod: .env
-
+          
+      # 优化步骤：给npm install添加重试机制，进一步避免安装失败
       - name: 📡 Init dependencies
-        run: npm install
-
+        uses: nick-fields/retry@master
+        with:
+          max_attempts: 3  # 最多重试3次
+          command: npm install
+          
       - name: 🚀 Run
         uses: nick-fields/retry@master
         with:
